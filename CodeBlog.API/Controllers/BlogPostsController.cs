@@ -91,5 +91,17 @@ namespace CodeBlog.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpDelete]
+        [Route("{id:Guid}")]
+        public async Task<IActionResult> DeleteBlogPost([FromRoute] Guid id)
+        {
+            var blogPost = await _blogPostRepository.DeleteAsync(id);
+            if (blogPost is null) return NotFound();
+
+            var response = _mapper.Map<BlogPostDto>(blogPost);
+
+            return Ok(response);
+        }
     }
 }

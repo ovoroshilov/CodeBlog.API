@@ -20,9 +20,14 @@ namespace CodeBlog.API.Repositories.Implementation
             return blogPost;
         }
 
-        public Task<BlogPost?> DeleteAsync(Guid id)
+        public async Task<BlogPost?> DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var existingBlopPost = await _context.BlogPosts.FirstOrDefaultAsync(x => x.Id == id);
+            if (existingBlopPost is null) return null;
+            _context.BlogPosts.Remove(existingBlopPost);
+            await _context.SaveChangesAsync();
+
+            return existingBlopPost;
         }
 
         public async Task<IEnumerable<BlogPost>> GetAllAsync()
