@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CodeBlog.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240317231402_Create Blog Image model")]
-    partial class CreateBlogImagemodel
+    [Migration("20240319124502_Rename propertie")]
+    partial class Renamepropertie
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
