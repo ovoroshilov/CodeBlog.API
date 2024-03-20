@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using CodeBlog.API.Models.Domain;
 using CodeBlog.API.Models.Dto.BlogImgDtos;
+using CodeBlog.API.Models.Dto.BlopPostDtos;
+using CodeBlog.API.Repositories.Implementation;
 using CodeBlog.API.Repositories.Interface;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +19,15 @@ namespace CodeBlog.API.Controllers
         {
             _imageRepository = imageRepository;
             _mapper = mapper;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllImages()
+        {
+            var blogPosts = await _imageRepository.GetAllAsync();
+            var response = blogPosts.Select(_mapper.Map<BlogImageDto>);
+
+            return Ok(response);
         }
 
         [HttpPost]
