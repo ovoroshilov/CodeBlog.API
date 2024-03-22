@@ -65,6 +65,18 @@ namespace CodeBlog.API.Controllers
             return Ok(response);
         }
 
+        [HttpGet]
+        [Route("{urlHandle}")]
+        public async Task<IActionResult> GetBlogPostByUrlHandle([FromRoute] string urlHandle)
+        {
+            var blogPost = await _blogPostRepository.GetByUrlHandle(urlHandle);
+            if (blogPost is null) return NotFound();
+
+            var response = _mapper.Map<BlogPostDto>(blogPost);
+
+            return Ok(response);
+        }
+
         [HttpPut]
         [Route("{id:Guid}")]
         public async Task<IActionResult> UpdateBlogPostById([FromRoute] Guid id, [FromBody]UpdateBlogPostRequestDto request)
