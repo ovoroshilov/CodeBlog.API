@@ -2,6 +2,7 @@
 using CodeBlog.API.Models.Domain;
 using CodeBlog.API.Models.Dto;
 using CodeBlog.API.Repositories.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CodeBlog.API.Controllers
@@ -20,6 +21,7 @@ namespace CodeBlog.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> CreateCategory(CreateCategotyRequestDto request)
         {
             var category = _mapper.Map<Category>(request);
@@ -31,6 +33,7 @@ namespace CodeBlog.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllCategories()
         {
             var categories = await _repository.GetAllAsync();
@@ -41,6 +44,7 @@ namespace CodeBlog.API.Controllers
 
         [HttpGet]
         [Route("{id:Guid}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetCategoryById([FromRoute] Guid id)
         {
             var category = await _repository.GetById(id);
@@ -50,7 +54,8 @@ namespace CodeBlog.API.Controllers
 
         [HttpPut]
         [Route("{id:Guid}")]
-        public async Task<IActionResult> UpateCategory([FromRoute] Guid id, [FromBody] UpdateCategoryRequestDto request)
+        [Authorize(Roles = "Writer")]
+        public async Task<IActionResult> UpdateCategory([FromRoute] Guid id, [FromBody] UpdateCategoryRequestDto request)
         {
             var category = _mapper.Map<Category>(request);
             category.Id = id;
@@ -63,6 +68,7 @@ namespace CodeBlog.API.Controllers
 
         [HttpDelete]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> DeleteCategory([FromRoute] Guid id)
         {
             var category = await _repository.DeleteAsync(id);

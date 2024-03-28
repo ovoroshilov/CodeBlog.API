@@ -3,6 +3,7 @@ using CodeBlog.API.Models.Domain;
 using CodeBlog.API.Models.Dto;
 using CodeBlog.API.Models.Dto.BlopPostDtos;
 using CodeBlog.API.Repositories.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CodeBlog.API.Controllers
@@ -22,7 +23,10 @@ namespace CodeBlog.API.Controllers
             _categoryRepository = categoryRepository;
         }
 
+
+       
         [HttpPost]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> CreateBlogPost([FromBody] CreateBlogPostRequest request)
         {
             var blogPost = _mapper.Map<BlogPost>(request);
@@ -43,9 +47,10 @@ namespace CodeBlog.API.Controllers
 
             return Ok(response);
         }
-
+        
         [HttpGet]
-        public async Task<IActionResult> GetAlBlogPosts()
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllBlogPosts()
         {
             var blogPosts = await _blogPostRepository.GetAllAsync();
             var response = blogPosts.Select(_mapper.Map<BlogPostDto>);
@@ -55,7 +60,8 @@ namespace CodeBlog.API.Controllers
 
         [HttpGet]
         [Route("{id:Guid}")]
-        public async Task<IActionResult> GetAlBlogPostById([FromRoute]Guid id)
+        [AllowAnonymous]
+        public async Task<IActionResult> GetBlogPostById([FromRoute]Guid id)
         {
             var blogPost = await _blogPostRepository.GetById(id);
             if (blogPost is null) return NotFound();
@@ -67,6 +73,7 @@ namespace CodeBlog.API.Controllers
 
         [HttpGet]
         [Route("{urlHandle}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetBlogPostByUrlHandle([FromRoute] string urlHandle)
         {
             var blogPost = await _blogPostRepository.GetByUrlHandle(urlHandle);
@@ -77,8 +84,10 @@ namespace CodeBlog.API.Controllers
             return Ok(response);
         }
 
+
         [HttpPut]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> UpdateBlogPostById([FromRoute] Guid id, [FromBody]UpdateBlogPostRequestDto request)
         {
             var blogPost = _mapper.Map<BlogPost>(request);
@@ -106,6 +115,7 @@ namespace CodeBlog.API.Controllers
 
         [HttpDelete]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> DeleteBlogPost([FromRoute] Guid id)
         {
             var blogPost = await _blogPostRepository.DeleteAsync(id);

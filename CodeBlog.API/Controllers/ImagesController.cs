@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using CodeBlog.API.Models.Domain;
 using CodeBlog.API.Models.Dto.BlogImgDtos;
-using CodeBlog.API.Models.Dto.BlopPostDtos;
-using CodeBlog.API.Repositories.Implementation;
 using CodeBlog.API.Repositories.Interface;
 using Microsoft.AspNetCore.Mvc;
 
