@@ -13,11 +13,13 @@ namespace CodeBlog.API.Controllers
     {
         private readonly ICategoryRepository _repository;
         private readonly IMapper _mapper;
+        private readonly ICacheRepository _cacheRepository;
 
-        public CategoriesController(ICategoryRepository repository, IMapper mapper)
+        public CategoriesController(ICategoryRepository repository, IMapper mapper, ICacheRepository cacheRepository)
         {
             _repository = repository;
             _mapper = mapper;
+            _cacheRepository = cacheRepository;
         }
 
         [HttpPost]
@@ -26,7 +28,10 @@ namespace CodeBlog.API.Controllers
         {
             var category = _mapper.Map<Category>(request);
 
-            await _repository.CreateAsync(category);
+            var addCategory = await _repository.CreateAsync(category);
+            var expireTime = DateTimeOffset.Now.AddMinutes(5);
+            _cacheRepository.SetData($"category-{addCategory.Id}", addCategory, expireTime);
+
             var response = _mapper.Map<CategoryResponseDto>(category);
 
             return Ok(response);
@@ -36,9 +41,15 @@ namespace CodeBlog.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAllCategories()
         {
-            var categories = await _repository.GetAllAsync();
+            var categories = _cacheRepository.GetData<IEnumerable<Category>>("categories");
+            if (categories is null)
+            {
+                categories = await _repository.GetAllAsync();
+                var expireTime = DateTimeOffset.Now.AddMinutes(5);
+                _cacheRepository.SetData("categories", categories, expireTime);
+            }
             var response = categories.Select(_mapper.Map<CategoryResponseDto>);
-           
+
             return Ok(response);
         }
 
@@ -47,8 +58,14 @@ namespace CodeBlog.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetCategoryById([FromRoute] Guid id)
         {
-            var category = await _repository.GetById(id);
-            if (category == null) return NotFound();
+            var category = _cacheRepository.GetData<Category>($"category-{id}");
+            if (category is null)
+            {
+                category = await _repository.GetById(id);
+                if (category is null) return NotFound();
+                var expireTime = DateTimeOffset.Now.AddMinutes(5);
+                _cacheRepository.SetData($"category-{id}", category, expireTime);
+            }
             return Ok(_mapper.Map<CategoryResponseDto>(category));
         }
 
@@ -74,6 +91,7 @@ namespace CodeBlog.API.Controllers
             var category = await _repository.DeleteAsync(id);
             if (category is null) return NotFound();
 
+            _cacheRepository.RemoveData<Category>($"category-{id}");
             var response = _mapper.Map<CategoryResponseDto>(category);
 
             return Ok(response);

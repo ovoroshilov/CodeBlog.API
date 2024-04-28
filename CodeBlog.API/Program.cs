@@ -17,6 +17,7 @@ builder.Services.AddDbContexts(builder.Configuration);
 
 builder.Services.RegisterAutoMapperProfiles();
 builder.Services.RegisterServices();
+builder.Services.AddRedis(builder.Configuration);
 
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddRoles<IdentityRole>()

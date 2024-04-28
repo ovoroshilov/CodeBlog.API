@@ -18,6 +18,15 @@ namespace CodeBlog.API.Extensions
             services.AddScoped<IBlogPostRepository, BlogPostRepository>();
             services.AddScoped<IImageRepository, ImageRepository>();
             services.AddScoped<IJwtTokenRepository, JwtTokenRepository>();
+            services.AddScoped<ICacheRepository, CacheRepository>();
+        }
+
+        public static void AddRedis(this IServiceCollection services, IConfiguration conf)
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = conf.GetConnectionString("Redis");
+            });
         }
 
         public static void RegisterAutoMapperProfiles(this IServiceCollection services)

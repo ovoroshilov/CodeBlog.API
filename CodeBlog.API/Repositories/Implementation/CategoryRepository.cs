@@ -8,6 +8,7 @@ namespace CodeBlog.API.Repositories.Implementation
     public class CategoryRepository : ICategoryRepository
     {
         private readonly ApplicationDbContext context;
+     
 
         public CategoryRepository(ApplicationDbContext context)
         {
