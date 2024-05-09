@@ -1,5 +1,6 @@
 using CodeBlog.API.Data;
 using CodeBlog.API.Extensions;
+using CodeBlog.API.Middlwares;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 
@@ -56,6 +57,8 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images")),
     RequestPath = "/Images"
 });
+
+app.UseMiddleware<GlobalExceptionHandalingMiddleware>();
 
 app.MapControllers();
 
