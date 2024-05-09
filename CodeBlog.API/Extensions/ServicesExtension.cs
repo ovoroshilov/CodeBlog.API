@@ -1,5 +1,6 @@
 ﻿using CodeBlog.API.Contracts.Profiles;
 using CodeBlog.API.Data;
+using CodeBlog.API.Middlwares;
 using CodeBlog.API.Repositories.Implementation;
 using CodeBlog.API.Repositories.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,6 +20,7 @@ namespace CodeBlog.API.Extensions
             services.AddScoped<IImageRepository, ImageRepository>();
             services.AddScoped<IJwtTokenRepository, JwtTokenRepository>();
             services.AddScoped<ICacheRepository, CacheRepository>();
+            services.AddTransient<GlobalExceptionHandalingMiddleware>();
         }
 
         public static void AddRedis(this IServiceCollection services, IConfiguration conf)

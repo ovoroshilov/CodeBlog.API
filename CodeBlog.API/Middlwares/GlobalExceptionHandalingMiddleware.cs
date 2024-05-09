@@ -1,36 +1,56 @@
-﻿using StackExchange.Redis;
+﻿using Microsoft.AspNetCore.Mvc;
+using StackExchange.Redis;
 using System.Net;
 using System.Text;
+using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace CodeBlog.API.Middlwares
 {
-    public class GlobalExceptionHandalingMiddleware
+    public class GlobalExceptionHandalingMiddleware : IMiddleware
     {
-        private readonly RequestDelegate _next;
         private readonly ILogger<GlobalExceptionHandalingMiddleware> _logger;
 
-        public GlobalExceptionHandalingMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandalingMiddleware> logger)
+        public GlobalExceptionHandalingMiddleware(ILogger<GlobalExceptionHandalingMiddleware> logger)
         {
-            _next = next;
             _logger = logger;
         }
-        public async Task InvokeAsync(HttpContext http)
+
+        public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
             try
             {
-                await _next(http);
+                await next(context);
             }
-            catch(RedisConnectionException ex)
+            catch (RedisConnectionException ex)
             {
-                http.Response.Body = new MemoryStream(Encoding.UTF8.GetBytes("Apperentrly redis is not connected"));
-                http.Response.StatusCode = (int)HttpStatusCode.GatewayTimeout;
                 _logger.LogError(ex, ex.Message);
-                
+                context.Response.StatusCode = (int)HttpStatusCode.GatewayTimeout;
+                var problem = new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.GatewayTimeout,
+                    Type = "Server error",
+                    Title = "Trouble with Redis",
+                    Detail = "Aperrently redis is not connected"
+                };
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(problem));
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                http.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+                var problem = new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.InternalServerError,
+                    Type = " Server error",
+                    Title = "Server error",
+                    Detail = "Unknown error"
+                };
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(problem));
             }
         }
     }
