@@ -13,9 +13,7 @@ builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddDbContexts(builder.Configuration);
-
 builder.Services.RegisterAutoMapperProfiles();
 builder.Services.RegisterServices();
 builder.Services.AddRedis(builder.Configuration);

@@ -15,27 +15,30 @@ namespace CodeBlog.API.Controllers
         private readonly IBlogPostRepository _blogPostRepository;
         private readonly IMapper _mapper;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ICacheRepository _cacheRepository;
 
-        public BlogPostsController(IBlogPostRepository blogPostRepository, IMapper mapper, ICategoryRepository categoryRepository)
+        public BlogPostsController(IBlogPostRepository blogPostRepository, IMapper mapper, ICategoryRepository categoryRepository, ICacheRepository cacheRepository)
         {
             _blogPostRepository = blogPostRepository;
             _mapper = mapper;
             _categoryRepository = categoryRepository;
+            _cacheRepository = cacheRepository;
         }
 
 
-       
+
         [HttpPost]
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> CreateBlogPost([FromBody] CreateBlogPostRequest request)
         {
             var blogPost = _mapper.Map<BlogPost>(request);
 
-            foreach(var categoryId in request.Categories)
+            foreach (var categoryId in request.Categories)
             {
                 var existingCategory = await _categoryRepository.GetById(categoryId);
 
-                if (existingCategory is not null) {
+                if (existingCategory is not null)
+                {
                     blogPost.Categories.Add(existingCategory);
                 }
             }
@@ -47,12 +50,18 @@ namespace CodeBlog.API.Controllers
 
             return Ok(response);
         }
-        
+
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllBlogPosts()
         {
-            var blogPosts = await _blogPostRepository.GetAllAsync();
+            var blogPosts = _cacheRepository.GetData<IEnumerable<BlogPost>>("blogposts");
+            if (blogPosts is null)
+            {
+                blogPosts = await _blogPostRepository.GetAllAsync();
+                var expireTime = DateTimeOffset.Now.AddMinutes(5);
+                _cacheRepository.SetData("blogposts", blogPosts, expireTime);
+            }
             var response = blogPosts.Select(_mapper.Map<BlogPostDto>);
 
             return Ok(response);
@@ -61,11 +70,16 @@ namespace CodeBlog.API.Controllers
         [HttpGet]
         [Route("{id:Guid}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetBlogPostById([FromRoute]Guid id)
+        public async Task<IActionResult> GetBlogPostById([FromRoute] Guid id)
         {
-            var blogPost = await _blogPostRepository.GetById(id);
-            if (blogPost is null) return NotFound();
-
+            var blogPost = _cacheRepository.GetData<BlogPost>($"blogpost-{id}");
+            if (blogPost is null)
+            {
+                blogPost = await _blogPostRepository.GetById(id);
+                if (blogPost is null) return NotFound();
+                var expireTime = DateTimeOffset.Now.AddMinutes(5);
+                _cacheRepository.SetData($"blogposts-{id}", blogPost, expireTime);
+            }
             var response = _mapper.Map<BlogPostDto>(blogPost);
 
             return Ok(response);
@@ -76,8 +90,14 @@ namespace CodeBlog.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetBlogPostByUrlHandle([FromRoute] string urlHandle)
         {
-            var blogPost = await _blogPostRepository.GetByUrlHandle(urlHandle);
-            if (blogPost is null) return NotFound();
+            var blogPost = _cacheRepository.GetData<BlogPost>($"blogpost-{urlHandle}");
+            if (blogPost is null)
+            {
+                blogPost = await _blogPostRepository.GetByUrlHandle(urlHandle);
+                if (blogPost is null) return NotFound();
+                var expireTime = DateTimeOffset.Now.AddMinutes(5);
+                _cacheRepository.SetData($"blogposts-{urlHandle}", blogPost, expireTime);
+            }
 
             var response = _mapper.Map<BlogPostDto>(blogPost);
 
@@ -88,10 +108,10 @@ namespace CodeBlog.API.Controllers
         [HttpPut]
         [Route("{id:Guid}")]
         [Authorize(Roles = "Writer")]
-        public async Task<IActionResult> UpdateBlogPostById([FromRoute] Guid id, [FromBody]UpdateBlogPostRequestDto request)
+        public async Task<IActionResult> UpdateBlogPostById([FromRoute] Guid id, [FromBody] UpdateBlogPostRequestDto request)
         {
             var blogPost = _mapper.Map<BlogPost>(request);
-            blogPost.Id = id;   
+            blogPost.Id = id;
 
             foreach (var categoryId in request.Categories)
             {
@@ -105,7 +125,7 @@ namespace CodeBlog.API.Controllers
 
             var updatedPost = await _blogPostRepository.UpdateAsync(blogPost);
 
-            if(updatedPost is null) return NotFound();
+            if (updatedPost is null) return NotFound();
 
             var response = _mapper.Map<BlogPostDto>(updatedPost);
             response.Categories = blogPost.Categories.Select(_mapper.Map<CategoryResponseDto>).ToList();

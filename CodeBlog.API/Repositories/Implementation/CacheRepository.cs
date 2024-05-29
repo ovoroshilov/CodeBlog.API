@@ -1,7 +1,7 @@
 ﻿using CodeBlog.API.Repositories.Interface;
 using StackExchange.Redis;
-using System.Data;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CodeBlog.API.Repositories.Implementation
 {
@@ -40,7 +40,12 @@ namespace CodeBlog.API.Repositories.Implementation
         public bool SetData<T>(string key, T value, DateTimeOffset expirationTime)
         {
             var expireTime = expirationTime.DateTime.Subtract(DateTime.Now);
-            return _cacheDb.StringSet(key, JsonSerializer.Serialize(value), expireTime);
+            var options = new JsonSerializerOptions()
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                WriteIndented = true
+            };
+            return _cacheDb.StringSet(key, JsonSerializer.Serialize(value, options), expireTime);
         }
     }
 }

@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 using System.Net;
-using System.Text;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
 
 namespace CodeBlog.API.Middlwares
 {
@@ -47,7 +45,7 @@ namespace CodeBlog.API.Middlwares
                     Status = (int)HttpStatusCode.InternalServerError,
                     Type = " Server error",
                     Title = "Server error",
-                    Detail = "Unknown error"
+                    Detail = ex.Message
                 };
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(problem));
