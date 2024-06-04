@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  codeblog.api:
+    image: ${DOCKER_REGISTRY-}codeblogapi
+    build:
+      context: .
+      dockerfile: CodeBlog.API/Dockerfile
+    ports:
+    - "5000:5000"
+    - "5001:5001"
+    depends_on:
+        - codeblog.redis
+    links:
+        - codeblog.redis
+
+  codeblog.redis:
+   image: redis:latest
+   restart: always
+   container_name: codeblog-redis
+   ports:
+     - 6379:6379
+    
